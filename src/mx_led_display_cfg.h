@@ -7,13 +7,22 @@
  */
 #ifndef MX_LED_DISPLAY_CFG_H
 #define MX_LED_DISPLAY_CFG_H
-/**********************************************************************
+/******************************************************************************
 * Includes
-**********************************************************************/
+******************************************************************************/
 #include "dio.h"
-/**********************************************************************
+/*****************************************************************************
+* Definitions
+******************************************************************************/
+//TODO: Edit this according to the application
+/** defines the maximum number of seven 
+ * segments between all MX LED displays (e.g. if there's a display with 2 seven
+ * segments and another with 3, then write 3 
+ */
+#define MX_LED_DISPLAY_MAX_SEG 4
+/****************************************************************************
 * Typedefs
-**********************************************************************/
+****************************************************************************/
 /**
 * Defines an enumerated list of all the pc links on the system
 */
@@ -26,10 +35,11 @@ typedef enum
 
 typedef struct
 {
-  MxLedDisplay_t PcLink; /**< the mux led display id */
-  DioChannel_t DataChannels[7]; /**< the number of the data ports
-   for the data of seven segment */
-  DioChannel_t* EnableChannels; /**< channels used for enable seven segments */
+  MxLedDisplay_t LedDisplay; /**< the mux led display id */
+  DioChannel_t DataChannels[7]; /**< the pins of the data of seven segments */
+  
+  /** channels used to enable seven segments */
+  DioChannel_t EnableChannels[MX_LED_DISPLAY_MAX_SEG];
   uint8_t EnableChannelsSize; /**< the number of the enable channels */
 } MxLedDisplayConfig_t;
 
