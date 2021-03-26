@@ -47,4 +47,27 @@ MxLedDisplay_Init(const MxLedDisplayConfig_t * const Config)
         }
     }
 }
+
+extern void 
+MxLedDisplay_Update(void)
+{
+  uint8_t Display;
+  uint8_t SevSeg;
+  uint8_t NextChannel;
+  uint8_t PrevChannel;
+
+  for(Display = 0; Display < MX_LED_DISPLAY_MAX; Display++)
+    {
+      //Disable the last channel
+      PrevChannel = gEnChannelsOrder[Display][SevSeg];
+      Dio_ChannelWrite(gConfig[Display].EnableChannels[PrevChannel], DIO_STATE_LOW);
+      
+      NextChannel = PrevChannel + 1;
+      NextChannel = NextChannel % gConfig[Display].EnableChannelsSize;
+      gEnChannelsOrder[Display][SevSeg] = NextChannel;
+
+      //Enable the next channel
+      Dio_ChannelWrite(gConfig[Display].EnableChannels[NextChannel], DIO_STATE_HIGH);
+    }
+}
 /*****************************End of File ************************************/
