@@ -10,24 +10,33 @@
 ******************************************************************************/
 #include <inttypes.h>
 #include "mx_led_display.h"
-
 /******************************************************************************
- * definitions
+ * Function prototypes
  ******************************************************************************/
+static void
+MxLedDisplay_ChannelWrite(
+  MxLedDisplayType_t Type,
+  DioChannel_t Channel,
+  DioState_t State);
 /******************************************************************************
  * Module variables definitions
  ******************************************************************************/
 /**
  * @brief This variable is used to track which channel to enable next.
  */ 
-static uint8_t gEnChannelsOrder[MX_LED_DISPLAY_MAX][MX_LED_DISPLAY_MAX_SEG];
+static uint8_t gPrevEnChannel[MX_LED_DISPLAY_MAX];
+
+/**
+ * @brief This variable is used to track the data of the seven segments.
+ */
+static uint8_t gData[MX_LED_DISPLAY_MAX][MX_LED_DISPLAY_MAX_SEG];
 
 /**
  * @brief The configuration pointer.
  */
 static const MxLedDisplayConfig_t* gConfig;
 
-static uint8_t SevSegTable[] = {
+static const uint8_t SevSegTable[] = {
   0x3F, //0
   0x06, //1
   0x5B, //2
@@ -57,9 +66,14 @@ MxLedDisplay_Init(const MxLedDisplayConfig_t * const Config)
   uint8_t SevSeg;
   for(Display = 0; Display < MX_LED_DISPLAY_MAX; Display++)
     {
+      gPrevEnChannel[Display] = 0;
+
       for(SevSeg = 0; SevSeg < gConfig[Display].EnableChannelsSize; SevSeg++)
         {
-          gEnChannelsOrder[Display][SevSeg] = 0;
+          //make sure all enable signals are low
+          MxLedDisplay_ChannelWrite(gConfig[Display].Type,
+          gConfig[Display].EnableChannels[SevSeg],
+          DIO_STATE_LOW);
         }
     }
 }
@@ -68,25 +82,77 @@ extern void
 MxLedDisplay_Update(void)
 {
   uint8_t Display;
-  uint8_t SevSeg;
-  uint8_t NextChannel;
-  uint8_t PrevChannel;
+  uint8_t SevSegOutput;
+  uint8_t SevSegLed;
 
   for(Display = 0; Display < MX_LED_DISPLAY_MAX; Display++)
     {
-      //For Anode 7-segment
-      //TODO: implement for cathode
-
       //Disable the last channel
-      PrevChannel = gEnChannelsOrder[Display][SevSeg];
-      Dio_ChannelWrite(gConfig[Display].EnableChannels[PrevChannel], DIO_STATE_LOW);
-      
-      NextChannel = PrevChannel + 1;
-      NextChannel = NextChannel % gConfig[Display].EnableChannelsSize;
-      gEnChannelsOrder[Display][SevSeg] = NextChannel;
+      MxLedDisplay_ChannelWrite(gConfig[Display].Type,
+       gConfig[Display].EnableChannels[gPrevEnChannel[Display]],
+        DIO_STATE_LOW);
+
+      gPrevEnChannel[Display] = (gPrevEnChannel[Display] + 1) %
+      gConfig[Display].EnableChannelsSize;
 
       //Enable the next channel
-      Dio_ChannelWrite(gConfig[Display].EnableChannels[NextChannel], DIO_STATE_HIGH);
+      MxLedDisplay_ChannelWrite(gConfig[Display].Type,
+       gConfig[Display].EnableChannels[gPrevEnChannel[Display]],
+        DIO_STATE_HIGH);
+
+      //Change the data
+      SevSegOutput = SevSegTable[gData[Display][gPrevEnChannel[Display]]];
+
+      for(SevSegLed = 0; SevSegLed < 7; SevSegLed++)
+        {
+          if(SevSegOutput & (1 << SevSegLed))
+            {
+              MxLedDisplay_ChannelWrite(gConfig[Display].Type,
+          gConfig[Display].DataChannels[SevSegLed], DIO_STATE_LOW);
+            }
+          else
+            {
+              MxLedDisplay_ChannelWrite(gConfig[Display].Type,
+          gConfig[Display].DataChannels[SevSegLed], DIO_STATE_HIGH);
+            }
+        }
+    }
+}
+
+static void
+MxLedDisplay_ChannelWrite(
+  MxLedDisplayType_t Type,
+  DioChannel_t Channel,
+  DioState_t State)
+{
+  if(!(Type < MX_LED_DISPLAY_TYPE_MAX &&
+  Channel < DIO_CHANNEL_MAX &&
+  State < DIO_STATE_MAX))
+    {
+      //TODO: handle this error
+      return;
+    }
+  if(Type == MX_LED_DISPLAY_TYPE_ANODE)
+    {
+      if(State == DIO_STATE_HIGH)
+        {
+          Dio_ChannelWrite(Channel, DIO_STATE_HIGH);
+        }
+        else
+        {
+          Dio_ChannelWrite(Channel, DIO_STATE_LOW);
+        }
+    }
+  else
+    {
+      if(State == DIO_STATE_HIGH)
+      	{
+          Dio_ChannelWrite(Channel, DIO_STATE_LOW);
+      	}
+      else
+      	{
+          Dio_ChannelWrite(Channel, DIO_STATE_HIGH);
+      	}
     }
 }
 
@@ -96,8 +162,8 @@ MxLedDisplay_SetData(MxLedDisplay_t Display, uint8_t SevSegNum, uint8_t Data)
 
   if(!(
       Display < MX_LED_DISPLAY_MAX &&
-      SevSegNum > 0 && 
-      SevSegNum <= gConfig[Display].EnableChannelsSize &&
+      SevSegNum >= 0 &&
+      SevSegNum < gConfig[Display].EnableChannelsSize &&
       Data <= 9
       ))
     {
@@ -105,25 +171,6 @@ MxLedDisplay_SetData(MxLedDisplay_t Display, uint8_t SevSegNum, uint8_t Data)
       return;
     }
 
-  uint8_t SevSegOutput;
-  uint8_t SevSegLed;
-  DioChannel_t SevSegLedChannel;
-  
-  SevSegOutput = SevSegTable[Data];
-  for(SevSegLed = 0; SevSegLed < 7; SevSegLed++)
-    {
-      //For Anode 7-segment
-      //TODO: implement for cathode
-
-      SevSegLedChannel = gConfig[Display].DataChannels[SevSegLed];
-      if(SevSegOutput & (1 << SevSegLed))
-        {
-          Dio_ChannelWrite(SevSegLedChannel, DIO_STATE_LOW);
-        }
-      else
-        {
-          Dio_ChannelWrite(SevSegLedChannel, DIO_STATE_HIGH);
-        }
-    }
+  gData[Display][SevSegNum] = Data;
 }
 /*****************************End of File ************************************/

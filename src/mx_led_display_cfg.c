@@ -34,7 +34,9 @@ static MxLedDisplayConfig_t MxLedDisplayConfig[MX_LED_DISPLAY_MAX] = {
       PORTB_1,
       PORTB_2,
       PORTB_3
-    }
+    },
+
+    .Type = MX_LED_DISPLAY_TYPE_ANODE
   }
 };
 /******************************************************************************

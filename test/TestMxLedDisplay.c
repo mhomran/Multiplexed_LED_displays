@@ -27,7 +27,20 @@ static const MxLedDisplayConfig_t * gConfig;
 void 
 setUp(void)
 {
+  uint8_t Display;
+  uint8_t SevSeg;
+
   gConfig = MxLedDisplay_GetConfig();
+
+  for(Display = 0; Display < MX_LED_DISPLAY_MAX; Display++)
+    {
+      for(SevSeg = 0; SevSeg < gConfig[Display].EnableChannelsSize; SevSeg++)
+        {
+          //make sure all enable signals are low
+          Dio_ChannelWrite_Expect(gConfig[Display].EnableChannels[SevSeg], DIO_STATE_LOW);
+        }
+    }
+
   MxLedDisplay_Init(gConfig);
 }
 
@@ -51,6 +64,11 @@ test_UpdateFunctionMultiplexLedsCorrectly(void)
       Dio_ChannelWrite_Expect(gConfig[Display].EnableChannels[0], DIO_STATE_LOW);
       //enable the next channel
       Dio_ChannelWrite_Expect(gConfig[Display].EnableChannels[1], DIO_STATE_HIGH);
+    
+      for(uint8_t SevSegLed = 0; SevSegLed < 7; SevSegLed++)
+        {
+          Dio_ChannelWrite_Ignore();
+        } 
     }
 
   //Act

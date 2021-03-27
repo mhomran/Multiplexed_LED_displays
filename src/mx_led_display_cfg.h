@@ -33,6 +33,12 @@ typedef enum
   MX_LED_DISPLAY_MAX
 }MxLedDisplay_t;
 
+typedef enum
+{
+  MX_LED_DISPLAY_TYPE_ANODE,
+  MX_LED_DISPLAY_TYPE_CATHODE,
+  MX_LED_DISPLAY_TYPE_MAX
+}MxLedDisplayType_t;
 typedef struct
 {
   MxLedDisplay_t LedDisplay; /**< the mux led display id */
@@ -41,6 +47,8 @@ typedef struct
   /** channels used to enable seven segments */
   DioChannel_t EnableChannels[MX_LED_DISPLAY_MAX_SEG];
   uint8_t EnableChannelsSize; /**< the number of the enable channels */
+
+  MxLedDisplayType_t Type;
 } MxLedDisplayConfig_t;
 
 /******************************************************************************
