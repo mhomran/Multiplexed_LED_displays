@@ -51,6 +51,15 @@ static const uint8_t SevSegTable[] = {
 /******************************************************************************
  * Function definitions
  ******************************************************************************/
+/******************************************************************************
+* Function : MxLedDisplay_Init()
+*//**
+* \b Description: Initialization function for the Multiplexed Led Display
+* module<br/>
+* \b PRE-CONDITION: Configuration table is populated<br/>
+* @param Config a pointer to the configuration table of the displays.
+* @return void 
+******************************************************************************/
 extern void 
 MxLedDisplay_Init(const MxLedDisplayConfig_t * const Config)
 {
@@ -78,6 +87,14 @@ MxLedDisplay_Init(const MxLedDisplayConfig_t * const Config)
     }
 }
 
+/******************************************************************************
+* Function : MxLedDisplay_Update()
+*//**
+* \b Description: Update function to multiplex the seven segment units of the 
+* displays<br/>
+* \b PRE-CONDITION: MxLedDisplay_Init is called correctly<br/>
+* @return void 
+******************************************************************************/
 extern void 
 MxLedDisplay_Update(void)
 {
@@ -119,6 +136,17 @@ MxLedDisplay_Update(void)
     }
 }
 
+/******************************************************************************
+* Function : MxLedDisplay_ChannelWrite()
+*//**
+* \b Description: Utility function used to right a channel according to its 
+* display type. For Cathode diplays the state is inverted.<br/>
+* \b PRE-CONDITION: MxLedDisplay_Init is called correctly<br/>
+* @param Type the type of the display.
+* @param Channel the channel to write.
+* @param State the state of the channel.
+* @return void 
+******************************************************************************/
 static void
 MxLedDisplay_ChannelWrite(
   MxLedDisplayType_t Type,
@@ -156,10 +184,20 @@ MxLedDisplay_ChannelWrite(
     }
 }
 
+/******************************************************************************
+* Function : MxLedDisplay_SetData()
+*//**
+* \b Description: This is a function used to change the content of a display's
+* seven segment unit.<br/>
+* \b PRE-CONDITION: MxLedDisplay_Init is called correctly<br/>
+* @param Display the display ID.
+* @param SevSegNum the seven segment index starting from the left (0).
+* @param Data the data to show on the seven segment.
+* @return void 
+******************************************************************************/
 extern void 
 MxLedDisplay_SetData(MxLedDisplay_t Display, uint8_t SevSegNum, uint8_t Data)
 {
-
   if(!(
       Display < MX_LED_DISPLAY_MAX &&
       SevSegNum >= 0 &&
